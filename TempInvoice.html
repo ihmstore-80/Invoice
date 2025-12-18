@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Invoice 1.0</title>
+
+  <style>
+    :root{
+      --ink:#444;
+      --line:#777;
+      --light:#777;
+      --thin:1px;
+      --radius:10px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      background:#fff;
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+      color:var(--ink);
+    }
+    .page{
+      max-width:980px;
+      margin:0 auto;
+      padding:20px 22px 28px;
+    }
+
+    /* ================= HEADER (FINAL) ================= */
+    .invoice-header{ margin: 0 auto 18px; }
+
+    .hdr-row{
+      display:grid;
+      grid-template-columns:1fr 1.2fr 1fr;
+      align-items:end;
+      direction:ltr; /* lock positions */
+    }
+    .hdr-left{justify-self:start;}
+    .hdr-center{justify-self:center; text-align:center;}
+    .hdr-right{justify-self:end; direction:rtl;}
+
+    .logo{
+      width:220px;
+      height:auto;
+      display:block;
+      margin:0 auto 8px;
+    }
+    .invoice-badge{
+      display:inline-block;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:4px 18px;
+      font-weight:700;
+      line-height:1.1;
+    }
+    .invoice-badge small{
+      display:block;
+      font-weight:600;
+      opacity:.9;
+    }
+
+    .inv-no{
+      border:0;
+      outline:none;
+      background:transparent;
+      font-size:20px;
+      font-weight:800;
+      color:#d00;
+      width:90px;
+      direction:ltr;
+    }
+    .date-en,.date-ar{
+      border:0;
+      outline:none;
+      background:transparent;
+      font-size:16px;
+      padding:0;
+    }
+    .date-en{direction:ltr; width:180px;}
+    .date-ar{direction:rtl; text-align:right; width:220px;}
+
+    .row-2{margin-top:8px;}
+    .row-3{
+      grid-template-columns:1fr;
+      margin-top:18px;
+    }
+    .name-line{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .mrms{min-width:70px; direction:ltr; white-space:nowrap;}
+    .req{min-width:210px; font-weight:600; direction:rtl; white-space:nowrap;}
+    .name-input{
+      flex:1;
+      min-width:0;
+      border:0;
+      border-bottom:1px dotted var(--line);
+      outline:none;
+      background:transparent;
+      padding:4px 8px 2px;
+      font-size:18px;
+      font-weight:700;
+      direction:rtl;
+      text-align:right;
+    }
+
+    /* ================= ITEMS (Description + Qty) ================= */
+   .items-box{
+  margin-top:22px;
+  border:1px solid #777;
+  border-radius:10px;
+  overflow:hidden;
+}
+
+.items-table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+.items-table th,
+.items-table td{
+  border-bottom:1px solid #777;
+  padding:10px 8px;
+  font-size:13px;
+}
+
+.items-table tr:last-child td{
+  border-bottom:none;
+}
+
+/* Column widths (paper-like) */
+.col-total{width:18%;}
+.col-unit{width:18%;}
+.col-qty{width:10%;}
+.col-desc{width:54%;}
+
+/* Header bilingual stack */
+.th-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  line-height:1.1;
+}
+.th-stack .ar{
+  font-weight:700;
+}
+.th-stack .en{
+  font-size:12px;
+  color:#777;
+  direction:ltr;
+}
+
+/* Inputs – clean like printed form */
+.items-table input{
+  width:100%;
+  border:0;
+  outline:none;
+  background:transparent;
+  font-size:14px;
+}
+
+.qty{
+  text-align:center;
+  direction:ltr;
+  font-variant-numeric: tabular-nums;
+}
+
+.money{
+  text-align:center;
+  direction:ltr;
+  font-variant-numeric: tabular-nums;
+}
+
+.desc{
+  direction:rtl;
+  text-align:right;
+}
+
+    /* ================= TOTALS (Big text + small amount) ================= */
+    .summary-wrap{
+      margin-top: 22px;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      overflow:hidden;
+    }
+
+    /* LEFT big text | RIGHT small amount */
+    .summary-row{
+      display:grid;
+      grid-template-columns: 1fr 120px;
+      border-top:1px solid var(--line);
+      direction:ltr;
+      align-items:stretch;
+    }
+    .summary-row:first-child{border-top:none;}
+
+    .summary-text{
+      padding:10px 12px;
+      display:flex;
+      align-items:center;
+    }
+    .summary-text input{
+      width:100%;
+      border:0;
+      outline:none;
+      background:transparent;
+      font-size:13px;
+      direction:ltr;
+    }
+
+    .summary-amount{
+      border-left:1px solid var(--line);
+      padding:10px 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .summary-amount input{
+      width:100%;
+      max-width:90px;
+      border:0;
+      outline:none;
+      background:transparent;
+      text-align:center;
+      direction:ltr;
+      font-weight:700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media print{
+      .page{padding:0}
+    }
+
+/* ================= FOOTER ================= */
+/* shared width container */
+.invoice-bottom{
+  width: 100%;
+}
+
+/* totals already fill container */
+.summary-wrap{
+  width: 100%;
+}
+
+/* footer centered but SAME WIDTH */
+.invoice-footer{
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.footer-box{
+  width: 100%;                 /* EXACT same width */
+  border: 1px solid #777;
+  border-radius: 14px;
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #555;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <!-- ================= HEADER ================= -->
+    <header class="invoice-header">
+      <div class="hdr-row">
+        <div class="hdr-left">
+          <span>No:</span>
+          <input class="inv-no" name="invoiceNo" value="1099" />
+        </div>
+
+        <div class="hdr-center">
+          <img src="logo.svg" class="logo" alt="Logo" />
+          <div class="invoice-badge">
+            <small>الفاتورة</small>
+            Invoice
+          </div>
+        </div>
+
+        <div class="hdr-right">
+          <span>التاريخ</span>
+          <input class="date-ar" name="dateAr" value="١٢ / ٦ / ١٤٤٧ هـ" />
+        </div>
+      </div>
+
+      <div class="hdr-row row-2">
+        <div class="hdr-left">
+          <span>Date</span>
+          <input class="date-en" name="dateEn" value="13 / 12 / 2025" />
+        </div>
+        <div></div>
+        <div></div>
+      </div>
+
+      <div class="hdr-row row-3">
+        <div class="name-line">
+          <span class="mrms">Mr./Ms.</span>
+          <input class="name-input" name="customerName" value="ولاء ع الحميد" />
+          <span class="req">المطلوب من المحترم/</span>
+        </div>
+      </div>
+    </header>
+
+    
+<!-- ================= ITEMS SECTION (FINAL – AR / EN) ================= -->
+<section class="items-box" aria-label="Invoice Items">
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th class="col-total">
+          <div class="th-stack">
+            <span class="ar">القيمة الإجمالية</span>
+            <span class="en">Total Price</span>
+          </div>
+        </th>
+        <th class="col-unit">
+          <div class="th-stack">
+            <span class="ar">السعر الإفرادي</span>
+            <span class="en">Unit Price</span>
+          </div>
+        </th>
+        <th class="col-qty">
+          <div class="th-stack">
+            <span class="ar">العدد</span>
+            <span class="en">Qty</span>
+          </div>
+        </th>
+        <th class="col-desc">
+          <div class="th-stack">
+            <span class="ar">البيان</span>
+            <span class="en">Items / Description</span>
+          </div>
+        </th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <!-- fixed clean rows (like paper form) -->
+      <tr>
+        <td><input class="money" /></td>
+        <td><input class="money" /></td>
+        <td><input class="qty" /></td>
+        <td><input class="desc" /></td>
+      </tr>
+      <tr>
+        <td><input class="money" /></td>
+        <td><input class="money" /></td>
+        <td><input class="qty" /></td>
+        <td><input class="desc" /></td>
+      </tr>
+      <tr>
+        <td><input class="money" /></td>
+        <td><input class="money" /></td>
+        <td><input class="qty" /></td>
+        <td><input class="desc" /></td>
+      </tr>
+      <tr>
+        <td><input class="money" /></td>
+        <td><input class="money" /></td>
+        <td><input class="qty" /></td>
+        <td><input class="desc" /></td>
+      </tr>
+      <tr>
+        <td><input class="money" /></td>
+        <td><input class="money" /></td>
+        <td><input class="qty" /></td>
+        <td><input class="desc" /></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- ================= TOTALS (Big text + small amount) ================= -->
+    <section class="summary-wrap" aria-label="Totals">
+      <div class="summary-row">
+        <div class="summary-text">
+          <input name="totalText1" value="TOTAL" />
+        </div>
+        <div class="summary-amount">
+          <input name="amount1" value="0.00" inputmode="decimal" />
+        </div>
+      </div>
+
+      <div class="summary-row">
+        <div class="summary-text">
+          <input name="totalText2" value="DELIVERY" />
+        </div>
+        <div class="summary-amount">
+          <input name="amount2" value="0.00" inputmode="decimal" />
+        </div>
+      </div>
+
+      <div class="summary-row">
+        <div class="summary-text">
+          <input name="totalText3" value="THE TOTAL OF INVOICE is one thousand and four hundreds ...." />
+        </div>
+        <div class="summary-amount">
+          <input name="amount3" value="1400" inputmode="numeric" />
+        </div>
+      </div>
+    </section>
+
+<!-- ================= FOOTER ================= -->
+<div class="invoice-bottom">
+  <footer class="invoice-footer">
+    <div class="footer-box">
+      <div class="footer-ar">الرياض - المملكة العربية السعودية</div>
+      <div class="footer-en">Riyadh - Kingdom of Saudi Arabia</div>
+      <div class="footer-mob">Mob: +966 59 209 8088</div>
+    </div>
+  </footer>
+</div>
+
+
+
+
+
+</body>
+</html>

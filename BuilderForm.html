@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Invoice Builder</title>
+  <style>
+    body{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;margin:0;background:#f6f6f6;color:#222}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:16px 16px 10px;margin-bottom:14px}
+    h2{margin:0 0 10px;font-size:16px}
+    .grid{display:grid;gap:10px}
+    .grid.cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+    .grid.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    label{display:block;font-size:12px;color:#555;margin:0 0 4px}
+    input, textarea{width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;font-size:14px;outline:none;background:#fff}
+    textarea{min-height:44px;resize:vertical}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .btn{border:1px solid #bbb;background:#fff;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:600}
+    .btn.primary{background:#111;color:#fff;border-color:#111}
+    .btn.danger{border-color:#c33;color:#c33}
+    table{width:100%;border-collapse:separate;border-spacing:0 8px}
+    th{font-size:12px;color:#555;text-align:left;padding:0 6px}
+    td{padding:0 6px}
+    .small{font-size:12px;color:#666}
+    .mono{font-variant-numeric:tabular-nums}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="card">
+      <h2>Invoice Header</h2>
+      <div class="grid cols-4">
+        <div>
+          <label>Invoice No</label>
+          <input id="invoiceNo" value="1099" />
+        </div>
+        <div>
+          <label>Date (EN) — e.g. 13 / 12 / 2025</label>
+          <input id="dateEn" value="13 / 12 / 2025" />
+        </div>
+        <div>
+          <label>Date (AR) — e.g. ١٢ / ٦ / ١٤٤٧ هـ</label>
+          <input id="dateAr" value="١٢ / ٦ / ١٤٤٧ هـ" />
+        </div>
+        <div>
+          <label>Customer Name (Arabic)</label>
+          <input id="customerName" value="ولاء ع الحميد" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Items</h2>
+      <div class="small">Enter Qty + Unit Price → Total Price auto-calculated. Add/remove rows as needed.</div>
+
+      <div class="row" style="margin:10px 0 6px;">
+        <button class="btn" id="addRowBtn" type="button">+ Add Item</button>
+        <button class="btn danger" id="removeRowBtn" type="button">− Remove Last</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width:46%;">Items / Description</th>
+            <th style="width:12%;">Qty</th>
+            <th style="width:18%;">Unit Price</th>
+            <th style="width:18%;">Total Price</th>
+          </tr>
+        </thead>
+        <tbody id="itemsTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Totals</h2>
+      <div class="grid cols-3">
+        <div>
+          <label>Delivery</label>
+          <input id="delivery" class="mono" value="0.00" inputmode="decimal" />
+        </div>
+        <div>
+          <label>Currency</label>
+          <input id="currency" value="SAR" />
+        </div>
+        <div>
+          <label>Amount in words (auto-filled)</label>
+          <input id="amountWords" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div class="small">Subtotal: <b class="mono" id="subTotalView">0.00</b></div>
+        <div class="small">Grand Total: <b class="mono" id="grandTotalView">0.00</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <button class="btn primary" id="openInvoiceBtn" type="button">Open Filled Invoice</button>
+        <button class="btn" id="saveDraftBtn" type="button">Save Draft</button>
+        <button class="btn" id="loadDraftBtn" type="button">Load Draft</button>
+        <span class="small">Template file expected: <b>invoice-template.html</b></span>
+      </div>
+    </div>
+
+  </div>
+
+<script>
+  // ---------- Simple number helpers ----------
+  function toNum(v){
+    if(v == null) return 0;
+    v = (""+v).replace(/,/g,"").trim();
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function money(n){ return (Math.round(n*100)/100).toFixed(2); }
+
+  // ---------- Very small English words (good enough for invoices) ----------
+  // Supports 0 .. 999,999 (extend if you want)
+  const ONES = ["zero","one","two","three","four","five","six","seven","eight","nine"];
+  const TEENS = ["ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"];
+  const TENS = ["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"];
+  function wordsUnder1000(n){
+    n = Math.floor(n);
+    let out = [];
+    const h = Math.floor(n/100);
+    const r = n % 100;
+    if(h){ out.push(ONES[h] + " hundred"); }
+    if(r){
+      if(r < 10) out.push(ONES[r]);
+      else if(r < 20) out.push(TEENS[r-10]);
+      else{
+        const t = Math.floor(r/10), o = r%10;
+        out.push(TENS[t] + (o? "-" + ONES[o] : ""));
+      }
+    }
+    return out.join(" ");
+  }
+  function numberToWords(n){
+    n = Math.floor(n);
+    if(n === 0) return "zero";
+    if(n >= 1000000) return String(n); // keep safe (extend later)
+    const thousands = Math.floor(n/1000);
+    const rest = n%1000;
+    let parts = [];
+    if(thousands) parts.push(wordsUnder1000(thousands) + " thousand");
+    if(rest) parts.push(wordsUnder1000(rest));
+    return parts.join(" ");
+  }
+
+  // ---------- Items UI ----------
+  const itemsTbody = document.getElementById("itemsTbody");
+
+  function makeRow(desc="", qty="", unit=""){
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input class="desc" placeholder="" value="${desc.replaceAll('"','&quot;')}" /></td>
+      <td><input class="qty mono" inputmode="numeric" value="${qty}" /></td>
+      <td><input class="unit mono" inputmode="decimal" value="${unit}" /></td>
+      <td><input class="total mono" readonly /></td>
+    `;
+    itemsTbody.appendChild(tr);
+
+    const qtyEl = tr.querySelector(".qty");
+    const unitEl = tr.querySelector(".unit");
+    qtyEl.addEventListener("input", recalc);
+    unitEl.addEventListener("input", recalc);
+  }
+
+  function recalc(){
+    let sub = 0;
+    [...itemsTbody.querySelectorAll("tr")].forEach(tr=>{
+      const q = toNum(tr.querySelector(".qty").value);
+      const u = toNum(tr.querySelector(".unit").value);
+      const t = q*u;
+      tr.querySelector(".total").value = t ? money(t) : "";
+      sub += t;
+    });
+
+    const delivery = toNum(document.getElementById("delivery").value);
+    const grand = sub + delivery;
+
+    document.getElementById("subTotalView").textContent = money(sub);
+    document.getElementById("grandTotalView").textContent = money(grand);
+
+    const cur = document.getElementById("currency").value.trim() || "SAR";
+    document.getElementById("amountWords").value =
+      `THE TOTAL OF INVOICE is ${numberToWords(grand)} ${cur}.`;
+  }
+
+  document.getElementById("delivery").addEventListener("input", recalc);
+
+  document.getElementById("addRowBtn").addEventListener("click", ()=>{ makeRow(); });
+  document.getElementById("removeRowBtn").addEventListener("click", ()=>{
+    const rows = itemsTbody.querySelectorAll("tr");
+    if(rows.length) rows[rows.length-1].remove();
+    recalc();
+  });
+
+  // initial rows
+  for(let i=0;i<5;i++) makeRow();
+  recalc();
+
+  // ---------- Draft save/load ----------
+  function collectData(){
+    const rows = [...itemsTbody.querySelectorAll("tr")].map(tr=>({
+      desc: tr.querySelector(".desc").value,
+      qty: tr.querySelector(".qty").value,
+      unit: tr.querySelector(".unit").value
+    }));
+    return {
+      invoiceNo: document.getElementById("invoiceNo").value,
+      dateEn: document.getElementById("dateEn").value,
+      dateAr: document.getElementById("dateAr").value,
+      customerName: document.getElementById("customerName").value,
+      delivery: document.getElementById("delivery").value,
+      currency: document.getElementById("currency").value,
+      amountWords: document.getElementById("amountWords").value,
+      rows
+    };
+  }
+
+  function applyData(data){
+    document.getElementById("invoiceNo").value = data.invoiceNo ?? "";
+    document.getElementById("dateEn").value = data.dateEn ?? "";
+    document.getElementById("dateAr").value = data.dateAr ?? "";
+    document.getElementById("customerName").value = data.customerName ?? "";
+    document.getElementById("delivery").value = data.delivery ?? "0.00";
+    document.getElementById("currency").value = data.currency ?? "SAR";
+
+    itemsTbody.innerHTML = "";
+    (data.rows ?? []).forEach(r=>makeRow(r.desc ?? "", r.qty ?? "", r.unit ?? ""));
+    if(!(data.rows ?? []).length){ for(let i=0;i<5;i++) makeRow(); }
+
+    recalc();
+    if(data.amountWords) document.getElementById("amountWords").value = data.amountWords;
+  }
+
+  document.getElementById("saveDraftBtn").addEventListener("click", ()=>{
+    localStorage.setItem("invoiceDraft_v1", JSON.stringify(collectData()));
+    alert("Draft saved.");
+  });
+
+  document.getElementById("loadDraftBtn").addEventListener("click", ()=>{
+    const raw = localStorage.getItem("invoiceDraft_v1");
+    if(!raw) return alert("No draft found.");
+    applyData(JSON.parse(raw));
+    alert("Draft loaded.");
+  });
+
+  // ---------- Open + fill invoice template ----------
+  async function openAndFillInvoice(){
+    const data = collectData();
+
+    // Open template in a new window
+    const w = window.open("invoice-template.html", "_blank");
+    if(!w) return alert("Popup blocked. Allow popups for this site.");
+
+    // Wait for it to load
+    w.addEventListener("load", ()=>{
+      const doc = w.document;
+
+      // Header fields (must match your template names/classes)
+      const setValBySelector = (sel, val) => {
+        const el = doc.querySelector(sel);
+        if(el) el.value = val;
+      };
+
+      // Your template uses: name="invoiceNo", "dateEn", "dateAr", "customerName"
+      setValBySelector('input[name="invoiceNo"]', data.invoiceNo);
+      setValBySelector('input[name="dateEn"]', data.dateEn);
+      setValBySelector('input[name="dateAr"]', data.dateAr);
+      setValBySelector('input[name="customerName"]', data.customerName);
+
+      // Items table in your template:
+      // each row has inputs with classes: .desc, .qty, .money (two money cells)
+      const tableRows = [...doc.querySelectorAll(".items-table tbody tr")];
+
+      // Fill up to available template rows
+      for(let i=0;i<tableRows.length;i++){
+        const rowData = data.rows[i] || {desc:"", qty:"", unit:""};
+        const tr = tableRows[i];
+
+        const descEl = tr.querySelector(".desc");
+        const qtyEl  = tr.querySelector(".qty");
+
+        // In your template there are 2 money inputs per row:
+        // first = total price, second = unit price (based on your current column order)
+        const moneyEls = tr.querySelectorAll(".money");
+        const totalEl = moneyEls[0] || null; // Total Price
+        const unitEl  = moneyEls[1] || null; // Unit Price
+
+        if(descEl) descEl.value = rowData.desc;
+        if(qtyEl) qtyEl.value = rowData.qty;
+        if(unitEl) unitEl.value = rowData.unit;
+
+        // compute total
+        const t = toNum(rowData.qty) * toNum(rowData.unit);
+        if(totalEl) totalEl.value = t ? money(t) : "";
+      }
+
+      // Totals section in your template:
+      // amount1 = TOTAL, amount2 = DELIVERY, amount3 = GRAND (or final)
+      const sub = toNum(document.getElementById("subTotalView").textContent);
+      const delivery = toNum(data.delivery);
+      const grand = sub + delivery;
+
+      // These exist in your template as: name="amount1", "amount2", "amount3"
+      setValBySelector('input[name="amount1"]', money(sub));
+      setValBySelector('input[name="amount2"]', money(delivery));
+      setValBySelector('input[name="amount3"]', String(Math.round(grand*100)/100));
+
+      // And the big text line:
+      setValBySelector('input[name="totalText3"]', data.amountWords || `THE TOTAL OF INVOICE is ${numberToWords(grand)} ${data.currency}.`);
+
+      w.focus();
+    });
+  }
+
+  document.getElementById("openInvoiceBtn").addEventListener("click", openAndFillInvoice);
+</script>
+</body>
+</html>
