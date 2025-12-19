@@ -1,11 +1,203 @@
 <!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="refresh" content="0; url=BuilderForm.html" />
-    <title>Invoice</title>
-  </head>
-  <body>
-    <p>Redirecting… <a href="BuilderForm.html">Open Builder</a></p>
-  </body>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Invoice Input</title>
+  <style>
+    body{font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;margin:20px;color:#333}
+    .wrap{max-width:980px;margin:0 auto}
+    h1{margin:0 0 12px}
+    .card{border:1px solid #777;border-radius:12px;padding:14px 16px;margin:12px 0}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    label{font-size:13px;color:#555}
+    input{width:100%;padding:10px;border:1px solid #bbb;border-radius:10px;outline:none}
+    input[type="number"]{direction:ltr;text-align:left}
+    .items{width:100%;border-collapse:collapse;margin-top:10px}
+    .items th,.items td{border:1px solid #777;padding:8px;font-size:12px}
+    .items th{background:#f7f7f7}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    button{padding:10px 14px;border:1px solid #777;border-radius:10px;background:#fff;cursor:pointer}
+  </style>
+</head>
+
+
+
+<script>
+function saveAndOpen() {
+
+  // ✅ correct selector (your table class is "items")
+  const rows = document.querySelectorAll('.items tbody tr');
+
+  // ✅ correct mapping to match createItemRow() order:
+  // [0]=desc, [1]=unit, [2]=qty, [3]=unitPrice, [4]=totalPrice
+  const items = Array.from(rows).map(row => {
+    const inputs = row.querySelectorAll('input');
+    return {
+      desc:       inputs[0]?.value || '',
+      unit:       inputs[1]?.value || '',
+      qty:        inputs[2]?.value || '',
+      unitPrice:  inputs[3]?.value || '',
+      totalPrice: inputs[4]?.value || ''
+    };
+  });
+
+  const payload = {
+    invoiceNo: document.getElementById('invoiceNo')?.value || '',
+    dateAr: document.getElementById('dateAr')?.value || '',
+    dateEn: document.getElementById('dateEn')?.value || '',
+    customerName: document.getElementById('customerName')?.value || '',
+
+    items,
+
+    totals: {
+      total:    document.getElementById('sumTotal')?.value || '',
+      delivery: document.getElementById('sumDelivery')?.value || '',
+      grand:    document.getElementById('sumGrand')?.value || ''
+    },
+
+    texts: {
+      t1: document.getElementById('text1')?.value || '',
+      t2: document.getElementById('text2')?.value || '',
+      t3: document.getElementById('text3')?.value || ''
+    }
+  };
+
+  localStorage.setItem('invoiceData', JSON.stringify(payload));
+  window.location.href = 'TempInvoice.html';
+}
+
+function clearData() {
+  localStorage.removeItem('invoiceData');
+  document.querySelectorAll('input').forEach(i => i.value = '');
+}
+
+function createItemRow() {
+  return `
+    <tr>
+      <td><input placeholder="Description"></td>
+      <td><input placeholder="Unit"></td>
+      <td><input type="number" value="0"></td>
+      <td><input type="number" step="0.01" value="0.00"></td>
+      <td><input type="number" step="0.01" value="0.00"></td>
+    </tr>
+  `;
+}
+
+/* ===== Add row ===== */
+function addRow() {
+  const tbody = document.getElementById('itemsBody');
+  if (!tbody) {
+    alert('itemsBody not found');
+    return;
+  }
+  tbody.insertAdjacentHTML('beforeend', createItemRow());
+}
+
+/* ===== Remove last row ===== */
+function removeRow() {
+  const tbody = document.getElementById('itemsBody');
+  if (tbody && tbody.lastElementChild) {
+    tbody.removeChild(tbody.lastElementChild);
+  }
+}
+
+/* ===== Initialize with 1 row ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  addRow(); // start with one row
+});
+
+</script>
+
+
+<body>
+  <div class="wrap">
+    <h1>إدخال بيانات الفاتورة</h1>
+
+    <div class="card">
+      <h3 style="margin:0 0 10px">بيانات عامة</h3>
+      <div class="grid">
+        <div>
+          <label>رقم الفاتورة (No)</label>
+          <input id="invoiceNo" placeholder="1099" />
+        </div>
+        <div>
+          <label>التاريخ عربي (التاريخ)</label>
+          <input id="dateAr" placeholder="١٢ / ٦ / ١٤٤٧ هـ" />
+        </div>
+        <div>
+          <label>Date (EN)</label>
+          <input id="dateEn" placeholder="13 / 12 / 2025" />
+        </div>
+        <div>
+          <label>اسم العميل</label>
+          <input id="customerName" placeholder="اسم العميل" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 10px">عناصر الفاتورة (كل صف 5 حقول)</h3>
+      <table class="items">
+        <thead>
+          <tr>
+            <th>Total Price</th>
+            <th>Unit Price</th>
+            <th>Qty</th>
+            <th>Unit</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody id="itemsBody"></tbody>
+      </table>
+      <div class="btns">
+        <button type="button" onclick="addRow()">+ إضافة صف</button>
+        <button type="button" onclick="removeRow()">- حذف آخر صف</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 10px">الإجماليات (3 أرقام)</h3>
+      <div class="grid">
+        <div>
+          <label>المجموع (Total)</label>
+          <input id="sumTotal" type="number" step="0.01" placeholder="0.00" />
+        </div>
+        <div>
+          <label>التوصيل (Delivery)</label>
+          <input id="sumDelivery" type="number" step="0.01" placeholder="0.00" />
+        </div>
+        <div>
+          <label>إجمالي المبلغ (Total)</label>
+          <input id="sumGrand" type="number" step="0.01" placeholder="0.00" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin:0 0 10px">نصوص إضافية (3 نصوص)</h3>
+      <div class="grid">
+        <div>
+          <label>Text 1</label>
+          <input id="text1" placeholder="اكتب النص الأول" />
+        </div>
+        <div>
+          <label>Text 2</label>
+          <input id="text2" placeholder="اكتب النص الثاني" />
+        </div>
+        <div>
+          <label>Text 3</label>
+          <input id="text3" placeholder="اكتب النص الثالث" />
+        </div>
+      </div>
+    </div>
+
+    <div class="btns">
+      <button type="button" onclick="saveAndOpen()">حفظ وفتح الفاتورة</button>
+      <button type="button" onclick="clearData()">مسح البيانات</button>
+    </div>
+  </div>
+
+ 
+</body>
 </html>
