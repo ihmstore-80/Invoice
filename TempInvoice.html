@@ -314,9 +314,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const totals = data.totals || {};
-  setById('sumTotal', totals.total ?? '0.00');
-  setById('sumDelivery', totals.delivery ?? '0.00');
-  setById('sumGrand', totals.grand ?? '0.00');
+  setById('sumTotal', Number(totals.total || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1  }));
+  //setById('sumTotal', totals.total ?? '0.00');
+  setById('sumDelivery', Number(totals.delivery || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1  }));
+  //setById('sumDelivery', totals.delivery ?? '0.00');
+  setById('sumGrand', Number(totals.grand || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1  }));
+ // setById('sumGrand', totals.grand ?? '0.00');
 
   const texts = data.texts || {};
   setById('extraText1', texts.t1 ?? '');
@@ -536,3 +539,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
+
