@@ -73,11 +73,11 @@
       border:0;
       outline:none;
       background:transparent;
-      font-size:16px;
+      font-size:20px;
       padding:0;
     }
     .date-en{direction:ltr; width:180px;}
-    .date-ar{direction:rtl; text-align:right; width:220px;}
+    .date-ar{direction:ltr; text-align:right; width:220px;}
 
     .row-2{margin-top:8px;}
     .row-3{
@@ -123,7 +123,8 @@
 .items-table td{
   border-bottom:1px solid #777;
   padding:10px 8px;
-  font-size:13px;
+  font-size:18px;
+
 }
 
 .items-table tr:last-child td{
@@ -132,9 +133,8 @@
 
 /* Column widths (paper-like) */
 .col-total{width:15%;}
-.col-unit{width:15%;}
-.col-qty{width:10%;}
-.col-uniti{width:10%;}
+.col-qty{width:15%;}
+.col-uniti{width:20%;}
 
 .col-desc{width:50%;}
 
@@ -150,7 +150,8 @@
   font-weight:700;
 }
 .th-stack .en{
-  font-size:12px;
+  font-size:18px;
+
   color:#777;
   direction:ltr;
 }
@@ -161,24 +162,31 @@
   border:0;
   outline:none;
   background:transparent;
-  font-size:14px;
+  font-size:18px;
+
 }
 
 .qty{
   text-align:center;
   direction:ltr;
   font-variant-numeric: tabular-nums;
+font-size:18px;
+
 }
 
 .money{
   text-align:center;
   direction:ltr;
   font-variant-numeric: tabular-nums;
+font-size:18px;
+
 }
 
 .desc{
   direction:rtl;
   text-align:right;
+font-size:18px;
+
 }
 
     /* ================= TOTALS (Big text + small amount) ================= */
@@ -196,6 +204,8 @@
       border-top:1px solid var(--line);
       direction:ltr;
       align-items:stretch;
+font-size:18px;
+
     }
     .summary-row:first-child{border-top:none;}
 
@@ -203,14 +213,17 @@
       padding:10px 12px;
       display:flex;
       align-items:center;
+font-size:18px;
+
     }
     .summary-text input{
       width:100%;
       border:0;
       outline:none;
       background:transparent;
-      font-size:13px;
-      direction:ltr;
+      font-size:18px;
+
+      direction:rtl;
     }
 
     .summary-amount{
@@ -219,6 +232,8 @@
       display:flex;
       align-items:center;
       justify-content:center;
+font-size:18px;
+
     }
     .summary-amount input{
       width:100%;
@@ -227,7 +242,9 @@
       outline:none;
       background:transparent;
       text-align:center;
-      direction:ltr;
+      direction:rtl;
+	font-size:18px;
+
       font-weight:700;
       font-variant-numeric: tabular-nums;
     }
@@ -260,7 +277,7 @@
   border-radius: 14px;
   padding: 14px 20px;
   text-align: center;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.6;
   color: #555;
 }
@@ -295,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   rows.forEach((tr, i) => {
     const inputs = tr.querySelectorAll('input');
-    if (inputs.length < 5) return;
+    if (inputs.length < 4) return;
 
     const item = items[i] || {};
 
@@ -303,8 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     inputs[0].value = item.totalPrice ?? '';  // Total Price
     inputs[1].value = item.unitPrice  ?? '';  // Unit Price
     inputs[2].value = item.qty        ?? '';  // Qty
-    inputs[3].value = item.unit       ?? '';  // Unit
-    inputs[4].value = item.desc       ?? '';  // Description
+    inputs[3].value = item.desc       ?? '';  // Description
   });
 
   // totals + texts (كما هو)
@@ -314,17 +330,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const totals = data.totals || {};
-  setById('sumTotal', Number(totals.total || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1  }));
-  //setById('sumTotal', totals.total ?? '0.00');
-  setById('sumDelivery', Number(totals.delivery || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1  }));
-  //setById('sumDelivery', totals.delivery ?? '0.00');
-  setById('sumGrand', Number(totals.grand || 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1  }));
- // setById('sumGrand', totals.grand ?? '0.00');
+  setById('sumTotal', totals.total ?? '0.00');
+  setById('sumDelivery', totals.delivery ?? '0.00');
+  setById('sumGrand', totals.grand ?? '0.00');
 
   const texts = data.texts || {};
-  setById('extraText1', texts.t1 ?? '');
-  setById('extraText2', texts.t2 ?? '');
-  setById('extraText3', texts.t3 ?? '');
+  setById('Total', texts.t1 ?? '');
+  setById('Delivery', texts.t2 ?? '');
+  setById('Total All', texts.t3 ?? '');
 });
 </script>
 
@@ -389,12 +402,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="en">Total Price</span>
           </div>
         </th>
-        <th class="col-unit">
-          <div class="th-stack">
-            <span class="ar">السعر الإفرادي</span>
-            <span class="en">Unit Price</span>
-          </div>
-        </th>
         <th class="col-qty">
           <div class="th-stack">
             <span class="ar">العدد</span>
@@ -423,36 +430,32 @@ document.addEventListener('DOMContentLoaded', () => {
         <td><input class="money" /></td>
         <td><input class="qty" /></td>
         <td><input class="desc" /></td>
-        <td><input class="desc" /></td>
       </tr>
-      <tr>
+     <tr>
         <td><input class="money" /></td>
         <td><input class="money" /></td>
         <td><input class="qty" /></td>
         <td><input class="desc" /></td>
-        <td><input class="desc" /></td>
       </tr>
-      <tr>
+<tr>
         <td><input class="money" /></td>
         <td><input class="money" /></td>
         <td><input class="qty" /></td>
         <td><input class="desc" /></td>
-        <td><input class="desc" /></td>
       </tr>
-      <tr>
+<tr>
         <td><input class="money" /></td>
         <td><input class="money" /></td>
         <td><input class="qty" /></td>
         <td><input class="desc" /></td>
-        <td><input class="desc" /></td>
       </tr>
-      <tr>
+<tr>
         <td><input class="money" /></td>
         <td><input class="money" /></td>
         <td><input class="qty" /></td>
         <td><input class="desc" /></td>
-        <td><input class="desc" /></td>
       </tr>
+
     </tbody>
   </table>
 </section>
@@ -539,4 +542,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
-
