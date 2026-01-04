@@ -30,15 +30,14 @@ function saveAndOpen() {
   const rows = document.querySelectorAll('.items tbody tr');
 
   // ✅ correct mapping to match createItemRow() order:
-  // [0]=desc, [1]=unit, [2]=qty, [3]=unitPrice, [4]=totalPrice
+  // [0]=desc, [1]=qty, [2]=unitPrice, [3]=totalPrice
   const items = Array.from(rows).map(row => {
     const inputs = row.querySelectorAll('input');
     return {
       desc:       inputs[0]?.value || '',
-      unit:       inputs[1]?.value || '',
-      qty:        inputs[2]?.value || '',
-      unitPrice:  inputs[3]?.value || '',
-      totalPrice: inputs[4]?.value || ''
+     qty:        inputs[1]?.value || '',
+      unitPrice:  inputs[2]?.value || '',
+      totalPrice: inputs[3]?.value || ''
     };
   });
 
@@ -76,13 +75,10 @@ function createItemRow() {
   return `
     <tr>
       <td><input placeholder="Description"></td>
-      <td><input placeholder="Unit"></td>
-        <td> <input type="text" id="amount" value="0.0" onblur="formatInput(this)"> </td>
-      //<td><input type="number" value="0"></td>
-      <td> <input type="text" id="amount" value="0.0" onblur="formatInput(this)"> </td>
-      //<td><input type="number" step="0.01" value="0.00"></td>
-      <td> <input type="text" id="amount" value="0.0" onblur="formatInput(this)"> </td>
-      //<td><input type="number" step="0.01" value="0.00"></td>
+	<td><input placeholder="Unit"></td>
+      <td><input placeholder="price"></td>
+      <td><input placeholder="Totalsub"></td>
+
     </tr>
   `;
 }
@@ -105,13 +101,6 @@ function removeRow() {
   }
 }
 
-  function formatInput(el) {
-  const value = Number(el.value.replace(/,/g, '')) || 0;
-  el.value = value.toLocaleString('en-US', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1
-  });
-}
 /* ===== Initialize with 1 row ===== */
 document.addEventListener('DOMContentLoaded', () => {
   addRow(); // start with one row
@@ -154,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <th>Total Price</th>
             <th>Unit Price</th>
             <th>Qty</th>
-            <th>Unit</th>
             <th>Description</th>
           </tr>
         </thead>
